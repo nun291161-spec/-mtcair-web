@@ -1,0 +1,11 @@
+{
+  "name": "MTC AIR SERVICE",
+  "short_name": "MTC AIR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071E44",
+  "theme_color": "#071E44",
+  "icons": [
+    { "src": "S_12583103.jpg", "sizes": "1280x1280", "type": "image/jpeg", "purpose": "any" }
+  ]
+}
