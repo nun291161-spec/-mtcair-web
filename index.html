@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MTC AIR</title>
+<meta name="description" content="ระบบส่งงานช่าง MTC AIR SERVICE">
+<meta name="theme-color" content="#071E44">
+<!-- โลโก้ร้าน: วางไฟล์ logo.jpg (สี่เหลี่ยมจัตุรัส) ไว้โฟลเดอร์เดียวกับไฟล์นี้ -->
+<link rel="icon" href="logo.jpg">
+<link rel="apple-touch-icon" href="logo.jpg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MTC AIR">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- การ์ดตัวอย่างตอนส่งลิงก์ในไลน์ -->
+<meta property="og:title" content="MTC AIR SERVICE">
+<meta property="og:description" content="ระบบส่งงานช่าง">
+<meta property="og:image" content="logo.jpg">
+<style>
+  html, body { margin: 0; height: 100%; background: #071E44; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #FFFFFF; }
+  .fallback { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1; padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px)); text-align: center; font: 12px/1.4 sans-serif; color: #BCD3EE; background: rgba(7, 30, 68, .9); }
+  .fallback a { color: #FFFFFF; }
+</style>
+</head>
+<body>
+<!-- ลิงก์ /exec ของระบบ MTC AIR (จาก Apps Script) ใส่ไว้ 2 จุดด้านล่าง ถ้าเปลี่ยนต้องแก้ให้ตรงกันทั้งสองจุด -->
+<iframe src="https://script.google.com/macros/s/AKfycbwEtrl-oNqdgcgZ6WLYd-HfPNtx5CvwVefziznCSROY05mHHaUauCQQytuNIpc-6XFysg/exec" title="MTC AIR" allow="clipboard-write; camera; fullscreen" allowfullscreen></iframe>
+<div class="fallback" id="fb" hidden>เปิดไม่ขึ้น? <a href="https://script.google.com/macros/s/AKfycbwEtrl-oNqdgcgZ6WLYd-HfPNtx5CvwVefziznCSROY05mHHaUauCQQytuNIpc-6XFysg/exec" target="_top">กดที่นี่เพื่อเปิดระบบโดยตรง</a></div>
+<script>
+  // ถ้า 8 วินาทีแล้วระบบยังไม่ขึ้น แสดงลิงก์เปิดตรง
+  var fb = document.getElementById('fb'), loaded = false;
+  document.querySelector('iframe').addEventListener('load', function () { loaded = true; fb.hidden = true; });
+  setTimeout(function () { if (!loaded) fb.hidden = false; }, 8000);
+</script>
+</body>
+</html>
