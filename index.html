@@ -5,27 +5,88 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MTC AIR</title>
 <meta name="theme-color" content="#071E44">
-<link rel="icon" href="S_12583103.jpg">
-<link rel="apple-touch-icon" href="S_12583103.jpg">
+<link rel="icon" href="S__12583103.jpg">
+<link rel="apple-touch-icon" href="S__12583103.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MTC AIR">
 <meta property="og:title" content="MTC AIR SERVICE">
-<meta property="og:image" content="S_12583103.jpg">
+<meta property="og:image" content="S__12583103.jpg">
 <style>
   html, body { margin: 0; height: 100%; background: #071E44; }
   iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #FFFFFF; }
   .fallback { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1; padding: 6px 12px; text-align: center; font: 12px sans-serif; color: #BCD3EE; background: rgba(7, 30, 68, .9); }
   .fallback a { color: #FFFFFF; }
+  .push-ask { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-radius: 16px; background: #071E44; color: #FFFFFF; font: 15px/1.4 sans-serif; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+  .push-ask b { flex: 1; }
+  .push-ask button { border: 0; border-radius: 12px; padding: 12px 14px; font: 700 15px sans-serif; cursor: pointer; }
+  .push-ask .yes { background: #2E86E0; color: #FFFFFF; }
+  .push-ask .no { background: transparent; color: #BCD3EE; }
 </style>
 </head>
 <body>
 <iframe src="https://script.google.com/macros/s/AKfycbwEtrl-oNqdgcgZ6WLYd-HfPNtx5CvwVefziznCSROY05mHHaUauCQQytuNIpc-6XFysg/exec" title="MTC AIR" allow="clipboard-write; camera; fullscreen" allowfullscreen></iframe>
 <div class="fallback" id="fb" hidden>เปิดไม่ขึ้น? <a href="https://script.google.com/macros/s/AKfycbwEtrl-oNqdgcgZ6WLYd-HfPNtx5CvwVefziznCSROY05mHHaUauCQQytuNIpc-6XFysg/exec" target="_top">กดที่นี่เพื่อเปิดระบบโดยตรง</a></div>
+<div class="push-ask" id="ask" hidden><b>🔔 เปิดการแจ้งเตือน งานใหม่จะเด้งแม้ปิดแอป</b><button type="button" class="yes" id="askYes">เปิด</button><button type="button" class="no" id="askNo">ไว้ก่อน</button></div>
 <script>
   var fb = document.getElementById('fb'), loaded = false;
   document.querySelector('iframe').addEventListener('load', function () { loaded = true; fb.hidden = true; });
   setTimeout(function () { if (!loaded) fb.hidden = false; }, 8000);
+
+  var FB_VER = '10.12.2', cfg = null, app = null, reg = null;
+  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  function canPush() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function tell(msg) { if (app) try { app.postMessage(Object.assign({ mtc: 1 }, msg), '*'); } catch (e) {} }
+  function load(src) {
+    return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
+  }
+  var fbReady = null;
+  function firebaseReady() {
+    if (!fbReady) fbReady = load('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js')
+      .then(function () { return load('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-messaging-compat.js'); })
+      .then(function () { if (!firebase.apps.length) firebase.initializeApp(cfg.config); return navigator.serviceWorker.register('sw.js'); })
+      .then(function (r) { reg = r; return navigator.serviceWorker.ready; });
+    return fbReady;
+  }
+  function getToken() {
+    return firebaseReady().then(function () {
+      return firebase.messaging().getToken({ vapidKey: cfg.vapidKey, serviceWorkerRegistration: reg });
+    }).then(function (t) {
+      if (!t) throw new Error('no token');
+      tell({ type: 'push-token', token: t, ua: (isIOS ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : 'คอม') + (standalone ? ' · แอป' : ' · เว็บ') });
+    }).catch(function (e) { tell({ type: 'push-status', status: 'error', error: String(e && e.message || e) }); });
+  }
+  function ask() {
+    document.getElementById('ask').hidden = true;
+    Notification.requestPermission().then(function (p) {
+      if (p === 'granted') getToken(); else tell({ type: 'push-status', status: p === 'denied' ? 'denied' : 'default' });
+    });
+  }
+  function start(fromApp) {
+    if (!cfg) return;
+    if (!canPush()) return tell({ type: 'push-status', status: isIOS && !standalone ? 'need-home' : 'unsupported' });
+    if (isIOS && !standalone) return tell({ type: 'push-status', status: 'need-home' });
+    if (Notification.permission === 'granted') return getToken();
+    if (Notification.permission === 'denied') return tell({ type: 'push-status', status: 'denied' });
+    tell({ type: 'push-status', status: 'default' });
+    var skip = false; try { skip = !fromApp && sessionStorage.getItem('askSkip') === '1'; } catch (e) {}
+    if (!skip) document.getElementById('ask').hidden = false;
+  }
+  document.getElementById('askYes').addEventListener('click', ask);
+  document.getElementById('askNo').addEventListener('click', function () {
+    document.getElementById('ask').hidden = true;
+    try { sessionStorage.setItem('askSkip', '1'); } catch (e) {}
+  });
+  window.addEventListener('message', function (ev) {
+    var d = ev.data;
+    if (!d || d.mtc !== 1) return;
+    app = ev.source;
+    if (d.type === 'hello') return tell({ type: 'wrapper', standalone: standalone, ios: isIOS });
+    if (d.type === 'push-config' && d.config && d.vapidKey) { cfg = { config: d.config, vapidKey: d.vapidKey }; return start(false); }
+    if (d.type === 'push-ask') { if (!cfg) return; if (canPush() && Notification.permission === 'default') return ask(); return start(true); }
+  });
 </script>
 </body>
 </html>
